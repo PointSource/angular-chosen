@@ -52,12 +52,11 @@ angular.module('localytics.directives').directive 'chosen', ->
     defaultText = null
     empty = false
 
-    initOrUpdate = ->
-      if chosen
-        element.trigger('chosen:updated')
-      else
-        chosen = element.chosen(options).data('chosen')
-        defaultText = chosen.default_text
+    init = ->
+      chosen = element.chosen(options).data('chosen')
+
+    upload = ->
+      element.trigger('chosen:updated')
 
     # Use Chosen's placeholder or no results found text depending on whether there are options available
     removeEmptyMessage = ->
@@ -68,37 +67,43 @@ angular.module('localytics.directives').directive 'chosen', ->
       empty = true
       element.attr('data-placeholder', chosen.results_none_found).attr('disabled', true).trigger('chosen:updated')
 
-    # Watch the underlying ngModel for updates and trigger an update when they occur.
-    if ngModel
-      origRender = ngModel.$render
-      ngModel.$render = ->
-        origRender()
-        initOrUpdate()
+    init()
 
-      # This is basically taken from angular ngOptions source.  ngModel watches reference, not value,
-      # so when values are added or removed from array ngModels, $render won't be fired.
-      if attr.multiple
-        viewWatch = -> ngModel.$viewValue
-        scope.$watch viewWatch, ngModel.$render, true
-    # If we're not using ngModel (and therefore also not using ngOptions, which requires ngModel),
-    # just initialize chosen immediately since there's no need to wait for ngOptions to render first
-    else initOrUpdate()
+    # Chosen will fail to load in certain environments, namely Internet Explorer before 8, iPhone, iPod
+    # and Android phone
+    if chosen
 
-    # Watch the disabled attribute (could be set by ngDisabled)
-    attr.$observe 'disabled', -> element.trigger('chosen:updated')
+      # Watch the underlying ngModel for updates and trigger an update when they occur.
+      if ngModel
+        origRender = ngModel.$render
+        ngModel.$render = ->
+          origRender()
+          update()
 
-    # Watch the collection in ngOptions and update chosen when it changes.  This works with promises!
-    # ngOptions doesn't do anything unless there is an ngModel, so neither do we.
-    if attr.ngOptions and ngModel
-      match = attr.ngOptions.match(NG_OPTIONS_REGEXP)
-      valuesExpr = match[7]
+        # This is basically taken from angular ngOptions source.  ngModel watches reference, not value,
+        # so when values are added or removed from array ngModels, $render won't be fired.
+        if attr.multiple
+          viewWatch = -> ngModel.$viewValue
+          scope.$watch viewWatch, ngModel.$render, true
+      # If we're not using ngModel (and therefore also not using ngOptions, which requires ngModel),
+      # just initialize chosen immediately since there's no need to wait for ngOptions to render first
+      else update()
 
-      scope.$watchCollection valuesExpr, (newVal, oldVal) ->
-        # There's no way to tell if the collection is a promise since $parse hides this from us, so just
-        # assume it is a promise if undefined, and show the loader
-        if angular.isUndefined(newVal)
-          startLoading()
-        else
-          removeEmptyMessage() if empty
-          stopLoading()
-          disableWithMessage() if isEmpty(newVal)
+      # Watch the disabled attribute (could be set by ngDisabled)
+      attr.$observe 'disabled', -> element.trigger('chosen:updated')
+
+      # Watch the collection in ngOptions and update chosen when it changes.  This works with promises!
+      # ngOptions doesn't do anything unless there is an ngModel, so neither do we.
+      if attr.ngOptions and ngModel
+        match = attr.ngOptions.match(NG_OPTIONS_REGEXP)
+        valuesExpr = match[7]
+
+        scope.$watchCollection valuesExpr, (newVal, oldVal) ->
+          # There's no way to tell if the collection is a promise since $parse hides this from us, so just
+          # assume it is a promise if undefined, and show the loader
+          if angular.isUndefined(newVal)
+            startLoading()
+          else
+            removeEmptyMessage() if empty
+            stopLoading()
+            disableWithMessage() if isEmpty(newVal)
