@@ -31,7 +31,7 @@
       require: '?ngModel',
       terminal: true,
       link: function(scope, element, attr, ngModel) {
-        var chosen, defaultText, disableWithMessage, empty, init, match, options, origRender, removeEmptyMessage, startLoading, stopLoading, upload, valuesExpr, viewWatch;
+        var chosen, defaultText, disableWithMessage, empty, init, match, options, origRender, removeEmptyMessage, startLoading, stopLoading, update, valuesExpr, viewWatch;
         element.addClass('localytics-chosen');
         options = scope.$eval(attr.chosen) || {};
         angular.forEach(attr, function(value, key) {
@@ -51,7 +51,7 @@
         init = function() {
           return chosen = element.chosen(options).data('chosen');
         };
-        upload = function() {
+        update = function() {
           return element.trigger('chosen:updated');
         };
         removeEmptyMessage = function() {
