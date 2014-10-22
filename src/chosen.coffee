@@ -55,7 +55,7 @@ angular.module('localytics.directives').directive 'chosen', ->
     init = ->
       chosen = element.chosen(options).data('chosen')
 
-    upload = ->
+    update = ->
       element.trigger('chosen:updated')
 
     # Use Chosen's placeholder or no results found text depending on whether there are options available
